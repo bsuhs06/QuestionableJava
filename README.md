@@ -1,22 +1,24 @@
 # QuestionableJava
-Bad Java 8 code to test code upgrading
+Java 8 code upgraded to Java 21
 
 ## Purpose
 
-This repository is intentionally written in Java 8 style and is meant to be a migration target for tools that upgrade code to Java 17 and Java 21.
+This repository started out as intentionally Java 8-style code and has been migrated to Java 21 (`maven.compiler.release=21`) while preserving behavior.
 
 ## Baseline workflow
 
-Run the tests before and after your upgrade pass to confirm behavior stays the same:
+Build and test with a JDK 21 toolchain:
 
 ```bash
 mvn test
 ```
 
-The application is also gated to Java 8 at runtime, so running it on newer JDKs should fail fast:
+The application is gated to Java 21 at runtime, so running it on an older JDK fails fast:
 
 ```bash
 mvn -q -DskipTests compile exec:java
 ```
 
-If you want to inspect the legacy surface area, start with the core classes in `src/main/java/com/questionablejava/` and the regression tests in `src/test/java/com/questionablejava/`.
+`LegacyDateUtilTest` asserts locale-independent but timezone-dependent formatting; run the suite in `America/Chicago` (for example `TZ=America/Chicago mvn test`) as the seeded expectations assume.
+
+If you want to inspect the upgraded surface area, start with the core classes in `src/main/java/com/questionablejava/` and the regression tests in `src/test/java/com/questionablejava/`.

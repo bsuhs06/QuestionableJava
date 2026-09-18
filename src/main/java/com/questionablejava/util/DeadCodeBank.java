@@ -1,9 +1,8 @@
 package com.questionablejava.util;
 
+import java.time.Year;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Vector;
 
 public final class DeadCodeBank {
     private DeadCodeBank() {
@@ -18,26 +17,15 @@ public final class DeadCodeBank {
     }
 
     public static String deadBanner() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("dead");
-        buffer.append(new Date().getYear());
-        buffer.append("-code");
-        return buffer.toString();
+        return "dead%d-code".formatted(Year.now().getValue() - 1900);
     }
 
     public static List<String> deadList() {
-        List<String> values = new ArrayList<String>();
-        values.add("alpha");
-        values.add("beta");
-        values.add("gamma");
-        return values;
+        return new ArrayList<>(List.of("alpha", "beta", "gamma"));
     }
 
-    public static Vector legacyVector() {
-        Vector vector = new Vector();
-        vector.add("one");
-        vector.add("two");
-        return vector;
+    public static List<String> legacyVector() {
+        return new ArrayList<>(List.of("one", "two"));
     }
 
     public static int deadMethod001(int input) {
@@ -3041,7 +3029,7 @@ public final class DeadCodeBank {
     }
 
     public static String deadMatrix() {
-        StringBuffer buffer = new StringBuffer();
+        var buffer = new StringBuilder();
         for (int row = 0; row < 10; row++) {
             for (int col = 0; col < 10; col++) {
                 buffer.append(row + col);
@@ -3056,7 +3044,7 @@ public final class DeadCodeBank {
 
     public static void deadThreadStopper(Thread thread) {
         if (thread != null) {
-            thread.stop();
+            thread.interrupt();
         }
     }
 
@@ -3064,7 +3052,7 @@ public final class DeadCodeBank {
         if (value == null) {
             return "null";
         }
-        if (value.length() == 0) {
+        if (value.isEmpty()) {
             return "empty";
         }
         return value;

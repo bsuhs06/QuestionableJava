@@ -4,9 +4,10 @@ import com.questionablejava.config.LegacySettings;
 import com.questionablejava.model.LegacyRecord;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class LegacyProcessor {
     private final LegacySettings settings;
@@ -16,17 +17,15 @@ public class LegacyProcessor {
     }
 
     public List<LegacyRecord> process(List<LegacyRecord> input) {
-        List<LegacyRecord> processed = new ArrayList<LegacyRecord>();
-        for (LegacyRecord record : input) {
-            processed.add(processOne(record));
-        }
-        processed = tidy(processed);
-        processed = adjustScores(processed);
-        return processed;
+        return input.stream()
+                .map(this::processOne)
+                .filter(record -> record.getName() != null && !record.getName().isEmpty())
+                .map(this::adjustOne)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private LegacyRecord processOne(LegacyRecord record) {
-        LegacyRecord copy = record.copy();
+        var copy = record.copy();
         copy.mutateLegacyState();
         copy.setName(pretty(copy.getName()));
         copy.setCategory(pretty(copy.getCategory()));
@@ -45,13 +44,7 @@ public class LegacyProcessor {
     }
 
     private int applyLegacyMath(LegacyRecord record) {
-        int base = record.getScore();
-        base = base + record.tagCount();
-        if (record.isActive()) {
-            base = base + 7;
-        } else {
-            base = base - 3;
-        }
+        var base = record.getScore() + record.tagCount() + (record.isActive() ? 7 : -3);
         if (record.getName() != null && record.getName().length() > 8) {
             base = base + 2;
         }
@@ -65,44 +58,20 @@ public class LegacyProcessor {
         if (value == null) {
             return "";
         }
-        String trimmed = value.trim();
-        if (trimmed.length() == 0) {
+        var trimmed = value.strip();
+        if (trimmed.isEmpty()) {
             return trimmed;
         }
         return trimmed.substring(0, 1).toUpperCase() + trimmed.substring(1).toLowerCase();
     }
 
     private int clamp(int value) {
-        if (value < 0) {
-            return 0;
-        }
-        if (value > 100) {
-            return 100;
-        }
-        return value;
-    }
-
-    private List<LegacyRecord> tidy(List<LegacyRecord> input) {
-        List<LegacyRecord> output = new ArrayList<LegacyRecord>();
-        for (LegacyRecord record : input) {
-            if (record.getName() != null && record.getName().length() > 0) {
-                output.add(record);
-            }
-        }
-        return output;
-    }
-
-    private List<LegacyRecord> adjustScores(List<LegacyRecord> input) {
-        List<LegacyRecord> output = new ArrayList<LegacyRecord>();
-        for (LegacyRecord record : input) {
-            output.add(adjustOne(record));
-        }
-        return output;
+        return Math.clamp(value, 0, 100);
     }
 
     private LegacyRecord adjustOne(LegacyRecord record) {
-        LegacyRecord copy = record.copy();
-        int score = copy.getScore();
+        var copy = record.copy();
+        var score = copy.getScore();
         score = score + legacyBonus(copy.getCategory());
         score = score + legacyPenalty(copy.getName());
         score = score + legacyTagContribution(copy.getTags());
@@ -114,91 +83,48 @@ public class LegacyProcessor {
         if (category == null) {
             return 0;
         }
-        if (category.equalsIgnoreCase("engineering")) {
-            return 8;
-        }
-        if (category.equalsIgnoreCase("data")) {
-            return 6;
-        }
-        if (category.equalsIgnoreCase("platform")) {
-            return 5;
-        }
-        return 2;
+        return switch (category.toLowerCase()) {
+            case "engineering" -> 8;
+            case "data" -> 6;
+            case "platform" -> 5;
+            default -> 2;
+        };
     }
 
     private int legacyPenalty(String name) {
         if (name == null) {
             return 0;
         }
-        if (name.toLowerCase().indexOf("drift") >= 0) {
+        var lower = name.toLowerCase();
+        if (lower.contains("drift")) {
             return -2;
         }
-        if (name.toLowerCase().indexOf("echo") >= 0) {
+        if (lower.contains("echo")) {
             return -1;
         }
         return 0;
     }
 
     private int legacyTagContribution(List<String> tags) {
-        int total = 0;
-        for (String tag : tags) {
-            if (tag == null) {
-                continue;
-            }
-            if (tag.length() > 6) {
-                total = total + 2;
-            } else {
-                total = total + 1;
-            }
-        }
-        return total;
+        return tags.stream()
+                .filter(Objects::nonNull)
+                .mapToInt(tag -> tag.length() > 6 ? 2 : 1)
+                .sum();
     }
 
     public Comparator<LegacyRecord> getComparator() {
-        return new Comparator<LegacyRecord>() {
-            public int compare(LegacyRecord left, LegacyRecord right) {
-                int scoreCompare = right.getScore() - left.getScore();
-                if (scoreCompare != 0) {
-                    return scoreCompare;
-                }
-                if (left.getName() == null && right.getName() == null) {
-                    return 0;
-                }
-                if (left.getName() == null) {
-                    return 1;
-                }
-                if (right.getName() == null) {
-                    return -1;
-                }
-                return left.getName().compareToIgnoreCase(right.getName());
-            }
-        };
+        return Comparator.<LegacyRecord>comparingInt(LegacyRecord::getScore).reversed()
+                .thenComparing(LegacyRecord::getName,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
     }
 
     public List<LegacyRecord> sort(List<LegacyRecord> input) {
-        List<LegacyRecord> copy = new ArrayList<LegacyRecord>(input);
-        Collections.sort(copy, getComparator());
-        return copy;
+        return input.stream().sorted(getComparator()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public String summary(List<LegacyRecord> input) {
-        int active = 0;
-        int inactive = 0;
-        int high = 0;
-        for (LegacyRecord record : input) {
-            if (record.isActive()) {
-                active++;
-            } else {
-                inactive++;
-            }
-            if (record.getScore() >= 60) {
-                high++;
-            }
-        }
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("active=").append(active).append(',');
-        buffer.append("inactive=").append(inactive).append(',');
-        buffer.append("highScore=").append(high);
-        return buffer.toString();
+        var active = input.stream().filter(LegacyRecord::isActive).count();
+        var high = input.stream().filter(record -> record.getScore() >= 60).count();
+        return "active=%d,inactive=%d,highScore=%d".formatted(active, input.size() - active, high);
     }
 }

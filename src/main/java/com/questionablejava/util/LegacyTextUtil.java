@@ -1,18 +1,17 @@
 package com.questionablejava.util;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class LegacyTextUtil {
     public static String nullToEmpty(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value;
+        return value == null ? "" : value;
     }
 
     public static String trimToEmpty(String value) {
-        return nullToEmpty(value).trim();
+        return nullToEmpty(value).strip();
     }
 
     public static String upper(String value) {
@@ -24,54 +23,34 @@ public class LegacyTextUtil {
     }
 
     public static String leftPad(String value, int width) {
-        StringBuffer buffer = new StringBuffer(nullToEmpty(value));
-        while (buffer.length() < width) {
-            buffer.insert(0, " ");
-        }
-        return buffer.toString();
+        var actual = nullToEmpty(value);
+        return " ".repeat(Math.max(0, width - actual.length())) + actual;
     }
 
     public static String rightPad(String value, int width) {
-        StringBuffer buffer = new StringBuffer(nullToEmpty(value));
-        while (buffer.length() < width) {
-            buffer.append(" ");
-        }
-        return buffer.toString();
+        var actual = nullToEmpty(value);
+        return actual + " ".repeat(Math.max(0, width - actual.length()));
     }
 
     public static List<String> splitByComma(String value) {
-        List<String> parts = new ArrayList<String>();
-        if (value == null || value.length() == 0) {
-            return parts;
+        if (value == null || value.isEmpty()) {
+            return List.of();
         }
-        String[] pieces = value.split(",");
-        for (int i = 0; i < pieces.length; i++) {
-            parts.add(trimToEmpty(pieces[i]));
-        }
-        return parts;
+        return Arrays.stream(value.split(","))
+                .map(LegacyTextUtil::trimToEmpty)
+                .collect(Collectors.toList());
     }
 
     public static String join(List<String> values, String separator) {
-        StringBuffer buffer = new StringBuffer();
-        for (int i = 0; i < values.size(); i++) {
-            if (i > 0) {
-                buffer.append(separator);
-            }
-            buffer.append(values.get(i));
-        }
-        return buffer.toString();
+        return values.stream().map(String::valueOf).collect(Collectors.joining(separator));
     }
 
     public static boolean isBlank(String value) {
-        return value == null || value.trim().length() == 0;
+        return value == null || value.isBlank();
     }
 
     public static String repeat(String value, int count) {
-        StringBuffer buffer = new StringBuffer();
-        for (int i = 0; i < count; i++) {
-            buffer.append(value);
-        }
-        return buffer.toString();
+        return count <= 0 ? "" : String.valueOf(value).repeat(count);
     }
 
     public static String legacyToken001(String value) {
@@ -955,87 +934,8 @@ public class LegacyTextUtil {
     }
 
     public static List<String> legacyTokens() {
-        List<String> tokens = new ArrayList<String>();
-        tokens.add("legacy-001");
-        tokens.add("legacy-002");
-        tokens.add("legacy-003");
-        tokens.add("legacy-004");
-        tokens.add("legacy-005");
-        tokens.add("legacy-006");
-        tokens.add("legacy-007");
-        tokens.add("legacy-008");
-        tokens.add("legacy-009");
-        tokens.add("legacy-010");
-        tokens.add("legacy-011");
-        tokens.add("legacy-012");
-        tokens.add("legacy-013");
-        tokens.add("legacy-014");
-        tokens.add("legacy-015");
-        tokens.add("legacy-016");
-        tokens.add("legacy-017");
-        tokens.add("legacy-018");
-        tokens.add("legacy-019");
-        tokens.add("legacy-020");
-        tokens.add("legacy-021");
-        tokens.add("legacy-022");
-        tokens.add("legacy-023");
-        tokens.add("legacy-024");
-        tokens.add("legacy-025");
-        tokens.add("legacy-026");
-        tokens.add("legacy-027");
-        tokens.add("legacy-028");
-        tokens.add("legacy-029");
-        tokens.add("legacy-030");
-        tokens.add("legacy-031");
-        tokens.add("legacy-032");
-        tokens.add("legacy-033");
-        tokens.add("legacy-034");
-        tokens.add("legacy-035");
-        tokens.add("legacy-036");
-        tokens.add("legacy-037");
-        tokens.add("legacy-038");
-        tokens.add("legacy-039");
-        tokens.add("legacy-040");
-        tokens.add("legacy-041");
-        tokens.add("legacy-042");
-        tokens.add("legacy-043");
-        tokens.add("legacy-044");
-        tokens.add("legacy-045");
-        tokens.add("legacy-046");
-        tokens.add("legacy-047");
-        tokens.add("legacy-048");
-        tokens.add("legacy-049");
-        tokens.add("legacy-050");
-        tokens.add("legacy-051");
-        tokens.add("legacy-052");
-        tokens.add("legacy-053");
-        tokens.add("legacy-054");
-        tokens.add("legacy-055");
-        tokens.add("legacy-056");
-        tokens.add("legacy-057");
-        tokens.add("legacy-058");
-        tokens.add("legacy-059");
-        tokens.add("legacy-060");
-        tokens.add("legacy-061");
-        tokens.add("legacy-062");
-        tokens.add("legacy-063");
-        tokens.add("legacy-064");
-        tokens.add("legacy-065");
-        tokens.add("legacy-066");
-        tokens.add("legacy-067");
-        tokens.add("legacy-068");
-        tokens.add("legacy-069");
-        tokens.add("legacy-070");
-        tokens.add("legacy-071");
-        tokens.add("legacy-072");
-        tokens.add("legacy-073");
-        tokens.add("legacy-074");
-        tokens.add("legacy-075");
-        tokens.add("legacy-076");
-        tokens.add("legacy-077");
-        tokens.add("legacy-078");
-        tokens.add("legacy-079");
-        tokens.add("legacy-080");
-        return tokens;
+        return IntStream.rangeClosed(1, 80)
+                .mapToObj("legacy-%03d"::formatted)
+                .collect(Collectors.toList());
     }
 }
