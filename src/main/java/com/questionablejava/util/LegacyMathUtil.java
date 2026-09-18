@@ -1,5 +1,7 @@
 package com.questionablejava.util;
 
+import java.util.Arrays;
+
 public class LegacyMathUtil {
     public static int safeAdd(int left, int right) {
         return left + right;
@@ -21,13 +23,7 @@ public class LegacyMathUtil {
     }
 
     public static int clamp(int value, int min, int max) {
-        if (value < min) {
-            return min;
-        }
-        if (value > max) {
-            return max;
-        }
-        return value;
+        return Math.clamp(value, min, max);
     }
 
     public static int legacyRound(double value) {
@@ -1083,10 +1079,6 @@ public class LegacyMathUtil {
     }
 
     public static int sumSeries(int[] values) {
-        int total = 0;
-        for (int value : values) {
-            total += value;
-        }
-        return total;
+        return Arrays.stream(values).sum();
     }
 }

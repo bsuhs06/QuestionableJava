@@ -6,10 +6,11 @@ import com.questionablejava.model.LegacyRecord;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LegacyRepository {
     private final LegacySettings settings;
-    private final List<LegacyRecord> records = new ArrayList<LegacyRecord>();
+    private final List<LegacyRecord> records = new ArrayList<>();
 
     public LegacyRepository(LegacySettings settings) {
         this.settings = settings;
@@ -50,48 +51,40 @@ public class LegacyRepository {
     }
 
     private LegacyRecord make(int id, String name, String category, int score, boolean active, int day, String... tags) {
-        LegacyRecord record = new LegacyRecord(id, name, category, score, active, new Date(1609459200000L + (day * 86400000L)));
-        for (String tag : tags) {
+        var record = new LegacyRecord(id, name, category, score, active, new Date(1609459200000L + (day * 86400000L)));
+        for (var tag : tags) {
             record.addTag(tag);
         }
         return record;
     }
 
     public List<LegacyRecord> loadAll() {
-        List<LegacyRecord> copy = new ArrayList<LegacyRecord>();
-        for (LegacyRecord record : records) {
-            copy.add(record.copy());
-        }
-        return copy;
+        return records.stream().map(LegacyRecord::copy).collect(Collectors.toList());
     }
 
     public List<LegacyRecord> findByCategory(String category) {
-        List<LegacyRecord> matches = new ArrayList<LegacyRecord>();
-        for (LegacyRecord record : records) {
-            if (category != null && category.equalsIgnoreCase(record.getCategory())) {
-                matches.add(record.copy());
-            }
+        if (category == null) {
+            return new ArrayList<>();
         }
-        return matches;
+        return records.stream()
+                .filter(record -> category.equalsIgnoreCase(record.getCategory()))
+                .map(LegacyRecord::copy)
+                .collect(Collectors.toList());
     }
 
     public List<LegacyRecord> findActive() {
-        List<LegacyRecord> matches = new ArrayList<LegacyRecord>();
-        for (LegacyRecord record : records) {
-            if (record.isActive()) {
-                matches.add(record.copy());
-            }
-        }
-        return matches;
+        return records.stream()
+                .filter(LegacyRecord::isActive)
+                .map(LegacyRecord::copy)
+                .collect(Collectors.toList());
     }
 
     public LegacyRecord findById(int id) {
-        for (LegacyRecord record : records) {
-            if (record.getId() == id) {
-                return record.copy();
-            }
-        }
-        return null;
+        return records.stream()
+                .filter(record -> record.getId() == id)
+                .findFirst()
+                .map(LegacyRecord::copy)
+                .orElse(null);
     }
 
     public void save(LegacyRecord record) {
@@ -110,19 +103,10 @@ public class LegacyRepository {
     }
 
     public String dumpSummary() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("Repository[");
-        buffer.append("count=").append(count());
-        buffer.append(",prefix=").append(settings.get("prefix", "legacy"));
-        buffer.append("]");
-        return buffer.toString();
+        return "Repository[count=%d,prefix=%s]".formatted(count(), settings.get("prefix", "legacy"));
     }
 
     public List<String> legacyNames() {
-        List<String> names = new ArrayList<String>();
-        for (LegacyRecord record : records) {
-            names.add(record.getName());
-        }
-        return names;
+        return records.stream().map(LegacyRecord::getName).collect(Collectors.toList());
     }
 }

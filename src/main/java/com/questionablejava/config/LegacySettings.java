@@ -1,18 +1,20 @@
 package com.questionablejava.config;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Vector;
 
 public class LegacySettings {
     private final Properties properties = new Properties();
-    private final Hashtable<String, String> cache = new Hashtable<String, String>();
-    private final Vector<String> warnings = new Vector<String>();
+    private final Map<String, String> cache = new LinkedHashMap<>();
+    private final List<String> warnings = new ArrayList<>();
     private final Date loadedAt = new Date();
 
     public static LegacySettings loadDefault() {
-        LegacySettings settings = new LegacySettings();
+        var settings = new LegacySettings();
         settings.properties.setProperty("title", "Questionable Java Report");
         settings.properties.setProperty("owner", "legacy-team");
         settings.properties.setProperty("currency", "USD");
@@ -27,15 +29,11 @@ public class LegacySettings {
     }
 
     public String get(String key, String fallback) {
-        String value = properties.getProperty(key);
-        if (value == null) {
-            return fallback;
-        }
-        return value;
+        return properties.getProperty(key, fallback);
     }
 
     public int getInt(String key, int fallback) {
-        String value = properties.getProperty(key);
+        var value = properties.getProperty(key);
         if (value == null) {
             return fallback;
         }
@@ -52,16 +50,16 @@ public class LegacySettings {
     }
 
     public Properties asProperties() {
-        Properties copy = new Properties();
+        var copy = new Properties();
         copy.putAll(properties);
         return copy;
     }
 
-    public Vector<String> getWarnings() {
+    public List<String> getWarnings() {
         return warnings;
     }
 
-    public Hashtable<String, String> getCache() {
+    public Map<String, String> getCache() {
         return cache;
     }
 
@@ -76,12 +74,12 @@ public class LegacySettings {
     }
 
     public String banner() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(get("separator", "---")).append('\n');
-        buffer.append(get("title", "Untitled")).append('\n');
-        buffer.append("Loaded: ").append(loadedAt).append('\n');
-        buffer.append("Owner: ").append(get("owner", "unknown")).append('\n');
-        buffer.append(get("separator", "---"));
-        return buffer.toString();
+        var separator = get("separator", "---");
+        return String.join("\n",
+                separator,
+                get("title", "Untitled"),
+                "Loaded: " + loadedAt,
+                "Owner: " + get("owner", "unknown"),
+                separator);
     }
 }

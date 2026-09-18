@@ -5,11 +5,14 @@ import com.questionablejava.data.LegacyRepository;
 import com.questionablejava.model.LegacyRecord;
 import com.questionablejava.process.LegacyProcessor;
 
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
 public class LegacyReport {
+    private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
     private final LegacySettings settings;
 
     public LegacyReport(LegacySettings settings) {
@@ -22,9 +25,7 @@ public class LegacyReport {
         System.out.println("Processor summary: " + processor.summary(records));
         System.out.println();
         printHeader();
-        for (LegacyRecord record : records) {
-            printRecord(record);
-        }
+        records.forEach(this::printRecord);
         printFooter(records.size());
         System.out.println();
         printWarnings();
@@ -37,15 +38,14 @@ public class LegacyReport {
     }
 
     private void printRecord(LegacyRecord record) {
-        StringBuffer line = new StringBuffer();
-        line.append(pad(record.getId(), 2)).append(" | ");
-        line.append(pad(record.getName(), 16)).append(" | ");
-        line.append(pad(record.getCategory(), 12)).append(" | ");
-        line.append(pad(record.getScore(), 5)).append(" | ");
-        line.append(pad(Boolean.toString(record.isActive()), 6)).append(" | ");
-        line.append(pad(format(record.getCreatedAt()), 19)).append(" | ");
-        line.append(record.getTags());
-        System.out.println(line.toString());
+        System.out.println(String.join(" | ",
+                pad(record.getId(), 2),
+                pad(record.getName(), 16),
+                pad(record.getCategory(), 12),
+                pad(record.getScore(), 5),
+                pad(Boolean.toString(record.isActive()), 6),
+                pad(format(record.getCreatedAt()), 19),
+                record.getTags().toString()));
     }
 
     private void printFooter(int count) {
@@ -60,9 +60,7 @@ public class LegacyReport {
             return;
         }
         System.out.println("Warnings:");
-        for (String warning : settings.getWarnings()) {
-            System.out.println(" - " + warning);
-        }
+        settings.getWarnings().forEach(warning -> System.out.println(" - " + warning));
     }
 
     public void printArguments(String[] args) {
@@ -72,26 +70,22 @@ public class LegacyReport {
         }
     }
 
-    private String pad(String value, int width) {
-        String actual = value == null ? "" : value;
-        StringBuffer buffer = new StringBuffer(actual);
-        while (buffer.length() < width) {
-            buffer.append(' ');
+    private static String pad(String value, int width) {
+        var actual = value == null ? "" : value;
+        if (actual.length() > width) {
+            return actual.substring(0, width);
         }
-        if (buffer.length() > width) {
-            return buffer.substring(0, width);
-        }
-        return buffer.toString();
+        return actual + " ".repeat(width - actual.length());
     }
 
-    private String pad(int value, int width) {
+    private static String pad(int value, int width) {
         return pad(Integer.toString(value), width);
     }
 
-    private String format(Date date) {
+    private static String format(Date date) {
         if (date == null) {
             return "n/a";
         }
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm").format(date);
+        return TIMESTAMP_FORMAT.format(date.toInstant().atZone(ZoneId.systemDefault()));
     }
 }

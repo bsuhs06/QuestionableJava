@@ -1,18 +1,21 @@
 package com.questionablejava.model;
 
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class LegacyRecord {
+    private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private int id;
     private String name;
     private String category;
     private int score;
     private boolean active;
     private Date createdAt;
-    private final List<String> tags = new ArrayList<String>();
+    private final List<String> tags = new ArrayList<>();
 
     public LegacyRecord(int id, String name, String category, int score, boolean active, Date createdAt) {
         this.id = id;
@@ -76,34 +79,25 @@ public class LegacyRecord {
     }
 
     public void addTag(String tag) {
-        if (tag != null && tag.length() > 0) {
+        if (tag != null && !tag.isEmpty()) {
             tags.add(tag);
         }
     }
 
     public String describe() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("LegacyRecord[");
-        buffer.append("id=").append(id).append(',');
-        buffer.append("name=").append(name).append(',');
-        buffer.append("category=").append(category).append(',');
-        buffer.append("score=").append(score).append(',');
-        buffer.append("active=").append(active).append(',');
-        buffer.append("createdAt=").append(format(createdAt)).append(',');
-        buffer.append("tags=").append(tags);
-        buffer.append(']');
-        return buffer.toString();
+        return "LegacyRecord[id=%d,name=%s,category=%s,score=%d,active=%b,createdAt=%s,tags=%s]"
+                .formatted(id, name, category, score, active, format(createdAt), tags);
     }
 
-    private String format(Date date) {
+    private static String format(Date date) {
         if (date == null) {
             return "null";
         }
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
+        return TIMESTAMP_FORMAT.format(date.toInstant().atZone(ZoneId.systemDefault()));
     }
 
     public LegacyRecord copy() {
-        LegacyRecord copy = new LegacyRecord(id, name, category, score, active, createdAt == null ? null : new Date(createdAt.getTime()));
+        var copy = new LegacyRecord(id, name, category, score, active, createdAt == null ? null : new Date(createdAt.getTime()));
         copy.tags.addAll(tags);
         return copy;
     }
@@ -112,12 +106,7 @@ public class LegacyRecord {
         if (value == null) {
             return false;
         }
-        for (String tag : tags) {
-            if (value.equalsIgnoreCase(tag)) {
-                return true;
-            }
-        }
-        return false;
+        return tags.stream().anyMatch(value::equalsIgnoreCase);
     }
 
     public int tagCount() {
@@ -125,11 +114,11 @@ public class LegacyRecord {
     }
 
     public void mutateLegacyState() {
-        if (name != null && name.length() > 0) {
-            name = name.trim();
+        if (name != null) {
+            name = name.strip();
         }
-        if (category != null && category.length() > 0) {
-            category = category.trim();
+        if (category != null) {
+            category = category.strip();
         }
         if (score < 0) {
             score = 0;
